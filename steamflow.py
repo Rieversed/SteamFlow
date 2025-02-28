@@ -7,14 +7,72 @@ from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
                              QHBoxLayout, QPushButton, QLabel, QTabWidget,
                              QCheckBox, QProgressBar, QMessageBox)
 from PyQt6.QtCore import Qt, QTimer
-from PyQt6.QtGui import QIcon, QFont
+from PyQt6.QtGui import QIcon, QFont, QPalette, QColor
 
 class SteamOptimizer(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("SteamFlow - Steam Optimizer")
         self.setMinimumSize(800, 600)
+        self.setup_theme()
         self.setup_ui()
+
+    def setup_theme(self):
+        # Set up dark OLED theme with iris accents
+        palette = QPalette()
+        palette.setColor(QPalette.ColorRole.Window, QColor(0, 0, 0))
+        palette.setColor(QPalette.ColorRole.WindowText, QColor(255, 255, 255))
+        palette.setColor(QPalette.ColorRole.Base, QColor(10, 10, 10))
+        palette.setColor(QPalette.ColorRole.AlternateBase, QColor(20, 20, 20))
+        palette.setColor(QPalette.ColorRole.ToolTipBase, QColor(0, 0, 0))
+        palette.setColor(QPalette.ColorRole.ToolTipText, QColor(255, 255, 255))
+        palette.setColor(QPalette.ColorRole.Text, QColor(255, 255, 255))
+        palette.setColor(QPalette.ColorRole.Button, QColor(20, 20, 20))
+        palette.setColor(QPalette.ColorRole.ButtonText, QColor(255, 255, 255))
+        palette.setColor(QPalette.ColorRole.BrightText, QColor(88, 170, 255))  # Iris accent
+        palette.setColor(QPalette.ColorRole.Link, QColor(88, 170, 255))  # Iris accent
+        palette.setColor(QPalette.ColorRole.Highlight, QColor(88, 170, 255))  # Iris accent
+        palette.setColor(QPalette.ColorRole.HighlightedText, QColor(0, 0, 0))
+
+        self.setPalette(palette)
+        app = QApplication.instance()
+        app.setPalette(palette)
+
+        # Set Consolas font
+        app_font = QFont("Consolas", 10)
+        app.setFont(app_font)
+
+    def calculate_cache_size(self):
+        try:
+            steam_path = self._get_steam_path()
+            if not steam_path:
+                self.cache_size.setText("Cache Size: Steam installation not found")
+                return
+
+            cache_paths = {
+                "App Cache": os.path.join(steam_path, "appcache"),
+                "Depot Cache": os.path.join(steam_path, "depotcache"),
+                "Download Cache": os.path.join(steam_path, "download")
+            }
+
+            total_size = 0
+            cache_details = []
+
+            for cache_name, path in cache_paths.items():
+                size = 0
+                if os.path.exists(path):
+                    for root, dirs, files in os.walk(path):
+                        size += sum(os.path.getsize(os.path.join(root, file)) 
+                                   for file in files if os.path.exists(os.path.join(root, file)))
+                size_mb = size / 1024 / 1024
+                total_size += size_mb
+                cache_details.append(f"{cache_name}: {size_mb:.1f} MB")
+
+            cache_text = f"Total Cache Size: {total_size:.1f} MB\n" + "\n".join(cache_details)
+            self.cache_size.setText(cache_text)
+
+        except Exception as e:
+            self.cache_size.setText(f"Error calculating cache size: {str(e)}")
 
     def setup_ui(self):
         # Create central widget and main layout
@@ -22,8 +80,24 @@ class SteamOptimizer(QMainWindow):
         self.setCentralWidget(central_widget)
         layout = QVBoxLayout(central_widget)
 
-        # Create tab widget
+        # Create tab widget with custom styling
         tabs = QTabWidget()
+        tabs.setStyleSheet("""
+            QTabWidget::pane { border: 1px solid #404040; }
+            QTabWidget::tab-bar { left: 5px; }
+            QTabBar::tab { 
+                background: #202020; 
+                color: white;
+                padding: 8px 12px;
+                margin-right: 2px;
+                border: 1px solid #404040;
+                border-bottom: none;
+            }
+            QTabBar::tab:selected { 
+                background: #58AAFF;
+                color: black;
+            }
+        """)
         layout.addWidget(tabs)
 
         # Process Optimization Tab
@@ -62,15 +136,34 @@ class SteamOptimizer(QMainWindow):
 
         tabs.addTab(telemetry_tab, "Telemetry Control")
 
-        # Cache Management Tab
+        # Cache Management Tab with enhanced UI
         cache_tab = QWidget()
         cache_layout = QVBoxLayout(cache_tab)
 
-        # Cache info and controls
+        # Cache info with detailed breakdown
         self.cache_size = QLabel("Cache Size: Calculating...")
+        self.cache_size.setWordWrap(True)
+        self.cache_size.setStyleSheet("padding: 10px; background: #101010; border-radius: 5px;")
         cache_layout.addWidget(self.cache_size)
 
+        # Update cache size initially and set up timer for updates
+        self.calculate_cache_size()
+        self.cache_timer = QTimer()
+        self.cache_timer.timeout.connect(self.calculate_cache_size)
+        self.cache_timer.start(10000)  # Update every 10 seconds
+
         clear_cache_btn = QPushButton("Clear Steam Cache")
+        clear_cache_btn.setStyleSheet("""
+            QPushButton { 
+                background: #58AAFF; 
+                color: black; 
+                padding: 8px 16px;
+                border-radius: 4px;
+                font-weight: bold;
+            }
+            QPushButton:hover { background: #7AB8FF; }
+            QPushButton:pressed { background: #3890FF; }
+        """)
         clear_cache_btn.clicked.connect(self.clear_cache)
         cache_layout.addWidget(clear_cache_btn)
 
