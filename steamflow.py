@@ -13,7 +13,8 @@ class SteamOptimizer(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("SteamFlow - Steam Optimizer")
-        self.setMinimumSize(800, 600)
+        self.setMinimumSize(600, 450)  # Smaller window size
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint)  # Custom window controls
         self.setup_theme()
         self.setup_ui()
 
@@ -80,9 +81,65 @@ class SteamOptimizer(QMainWindow):
         self.setCentralWidget(central_widget)
         layout = QVBoxLayout(central_widget)
 
+        # Custom window controls
+        title_bar = QWidget()
+        title_layout = QHBoxLayout(title_bar)
+        title_layout.setContentsMargins(10, 5, 10, 5)
+        
+        title_label = QLabel("SteamFlow")
+        title_label.setStyleSheet("color: white; font-weight: bold;")
+        
+        minimize_btn = QPushButton("−")
+        close_btn = QPushButton("×")
+        for btn in (minimize_btn, close_btn):
+            btn.setFixedSize(30, 30)
+            btn.setStyleSheet("""
+                QPushButton {
+                    background: #202020;
+                    border: none;
+                    color: white;
+                    font-size: 16px;
+                    border-radius: 15px;
+                }
+                QPushButton:hover { background: #404040; }
+                QPushButton:pressed { background: #505050; }
+            """)
+        
+        minimize_btn.clicked.connect(self.showMinimized)
+        close_btn.clicked.connect(self.close)
+        
+        title_layout.addWidget(title_label)
+        title_layout.addStretch()
+        title_layout.addWidget(minimize_btn)
+        title_layout.addWidget(close_btn)
+        layout.addWidget(title_bar)
+        
         # Create tab widget with custom styling
         tabs = QTabWidget()
         tabs.setStyleSheet("""
+        QCheckBox {
+            color: white;
+            spacing: 8px;
+            padding: 8px;
+            background: #202020;
+            border-radius: 4px;
+            margin: 4px;
+        }
+        QCheckBox::indicator {
+            width: 18px;
+            height: 18px;
+            border: 2px solid #58AAFF;
+            border-radius: 4px;
+            background: #101010;
+        }
+        QCheckBox::indicator:checked {
+            background: #58AAFF;
+            image: url(checkmark.png);
+        }
+        QCheckBox:hover {
+            background: #303030;
+        }
+
             QTabWidget::pane { border: 1px solid #404040; }
             QTabWidget::tab-bar { left: 5px; }
             QTabBar::tab { 
@@ -92,6 +149,8 @@ class SteamOptimizer(QMainWindow):
                 margin-right: 2px;
                 border: 1px solid #404040;
                 border-bottom: none;
+                border-top-left-radius: 8px;
+                border-top-right-radius: 8px;
             }
             QTabBar::tab:selected { 
                 background: #58AAFF;
@@ -141,16 +200,27 @@ class SteamOptimizer(QMainWindow):
         cache_layout = QVBoxLayout(cache_tab)
 
         # Cache info with detailed breakdown
-        self.cache_size = QLabel("Cache Size: Calculating...")
+        self.cache_size = QLabel("Cache Size: Click Calculate to analyze")
         self.cache_size.setWordWrap(True)
         self.cache_size.setStyleSheet("padding: 10px; background: #101010; border-radius: 5px;")
         cache_layout.addWidget(self.cache_size)
 
-        # Update cache size initially and set up timer for updates
-        self.calculate_cache_size()
-        self.cache_timer = QTimer()
-        self.cache_timer.timeout.connect(self.calculate_cache_size)
-        self.cache_timer.start(10000)  # Update every 10 seconds
+        # Calculate button for cache analysis
+        calculate_btn = QPushButton("Calculate Cache Size")
+        calculate_btn.setStyleSheet("""
+            QPushButton { 
+                background: #58AAFF; 
+                color: black; 
+                padding: 8px 16px;
+                border-radius: 4px;
+                font-weight: bold;
+                margin-bottom: 10px;
+            }
+            QPushButton:hover { background: #7AB8FF; }
+            QPushButton:pressed { background: #3890FF; }
+        """)
+        calculate_btn.clicked.connect(self.calculate_cache_size)
+        cache_layout.addWidget(calculate_btn)
 
         clear_cache_btn = QPushButton("Clear Steam Cache")
         clear_cache_btn.setStyleSheet("""
