@@ -92,10 +92,12 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 This tool is not affiliated with Valve Corporation or Steam. Use at your own risk. Always backup your data before making system changes.
 
+This tool has been made by ai with the supervision of humans to ensure the app doesnt have any malicious intensions, dont belive me check the source code and compile the exe youre self.
+
 ## 🌟 Support
 
 If you found this project helpful, please give it a star! For issues, questions, or suggestions, please open an issue in the repository.
 
 ---
 
-Made with ❤️ by [Your Name]
+Made with ❤️ by Rieversed
